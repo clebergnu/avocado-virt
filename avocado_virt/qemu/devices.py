@@ -18,8 +18,8 @@
 # Author: Stefan Hajnoczi <stefanha@redhat.com>
 # Author: Ruda Moura <rmoura@redhat.com>
 
-from avocado.utils import network
-from avocado.utils.data_structures import Borg
+from avocado.utils.network import PortTracker
+
 from . import path
 
 
@@ -29,48 +29,6 @@ class UnsupportedMigrationProtocol(Exception):
 
 class UnknownQemuDevice(Exception):
     pass
-
-
-class PortTracker(Borg):
-
-    """
-    Tracks ports used in the host machine.
-    """
-
-    def __init__(self):
-        Borg.__init__(self)
-        self.address = 'localhost'
-        self.start_port = 5000
-        if not hasattr(self, 'retained_ports'):
-            self._reset_retained_ports()
-
-    def __str__(self):
-        return 'Ports tracked: %r' % self.retained_ports
-
-    def _reset_retained_ports(self):
-        self.retained_ports = []
-
-    def register_port(self, port):
-        if ((port not in self.retained_ports) and
-                (network.is_port_free(port, self.address))):
-            self.retained_ports.append(port)
-        else:
-            raise ValueError('Port %d in use' % port)
-        return port
-
-    def find_free_port(self, start_port=None):
-        if start_port is None:
-            start_port = self.start_port
-        port = start_port
-        while ((port in self.retained_ports) or
-               (not network.is_port_free(port, self.address))):
-            port += 1
-        self.retained_ports.append(port)
-        return port
-
-    def release_port(self, port):
-        if port in self.retained:
-            self.retained.remove(port)
 
 
 class QemuDevice(object):
